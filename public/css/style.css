@@ -1,0 +1,224 @@
+body{
+    font-family: "Plus Jakarta Sans", sans-serif !important;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container{
+    flex: 1;
+}
+
+
+/* Navbar Styles */
+.navbar{
+    height: 5rem;
+    background-color: white;
+}
+.fa-compass{
+    font-size: 2rem;
+    color: #fe424d;
+}
+
+.nav-link{
+    color: #222222 !important;
+}
+
+/* Footer Styles */
+
+.f-info-links a {
+     text-decoration: none;
+     color: #222222;
+}
+
+.f-info-links a:hover {
+    text-decoration: underline;
+}
+
+.f-info-links, 
+.f-info-socials, 
+.f-info-brand {
+    width: 100%;
+    vertical-align: middle;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.f-info-socials i {
+    font-size: 1.2rem;
+    margin-right: 1rem;
+}
+
+.f-info {
+    text-align: center;
+    height: 8rem;
+    background-color: #ebebeb;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: space-evenly;
+}
+
+
+/* Card Styles */
+.listing-card {
+    border: none !important;
+    margin-bottom: 2rem;
+}
+
+.card-img-top{
+    border-radius: 1rem !important;
+    width: 100% !important;
+    object-fit: cover !important;
+}
+
+.card-body{
+    padding: 0 !important;
+}
+
+.card-text p{
+   font-weight: 400 !important;
+}
+
+.Listing-link{
+    text-decoration: none !important;
+}
+
+/*card Effects*/
+.card-img-overlay{
+    opacity: 0;
+}
+
+.card-img-overlay:hover{
+    opacity: 0.2;
+    background-color: white;
+}
+
+/* New page */
+
+.add-btn {
+    background-color: #fe424d !important;
+    border: none !important;
+}
+
+/* Edit page */
+.edit-btn{
+    background-color: #fe424d !important;
+    border: none !important;
+}
+
+/* Show page */
+.show-img{
+    height: 30vh;
+}
+
+.btns{
+    display: flex;
+}
+
+.show-card{
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* MAP Styles */
+#map { 
+    height: 400px;
+    width: 80vh;
+}
+
+
+/* Filter Styles */
+/* Soft focus effect and rounded corners */
+.form-select.shadow-sm {
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.form-select.shadow-sm:focus {
+    border-color: #3888ff; /* A nice Airbnb-style pink/red */
+    box-shadow: 0 0 0 0.25 margin-rgba(255, 56, 92, 0.25);
+}
+
+
+/* Smooth transition */
+body{
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark Mode Base */
+.dark-mode{
+  background-color:#121212;
+  color:#ffffff;
+}
+
+/* Navbar */
+.dark-mode .navbar{
+  background:#1e1e1e !important;
+}
+
+.dark-mode .navbar a{
+  color:#ffffff !important;
+}
+
+/* Cards */
+.dark-mode .card{
+  background:#1e1e1e;
+  color:#ffffff;
+  border:none;
+}
+
+/* Forms */
+.dark-mode input,
+.dark-mode textarea,
+.dark-mode select{
+  background:#2a2a2a;
+  color:#ffffff;
+  border:1px solid #555;
+}
+
+/* Footer */
+.dark-mode footer{
+  background:#1e1e1e;
+  color:#ffffff;
+}
+/* Filters section */
+.dark-mode .filters{
+  background-color:#121212;
+}
+
+/* Filter items text */
+.dark-mode .filter{
+  color:#ffffff;
+}
+
+/* Filter icons */
+.dark-mode .filter i{
+  color:#ffffff;
+}
+.dark-mode .text-muted{
+  color:#ffffff !important;
+}
+
+/* Price breakdown section in dark mode */
+.dark-mode .bg-light{
+  background-color:#2a2a2a !important;
+  color:#ffffff;
+}
+
+.dark-mode .bg-light p{
+  color:#ffffff;
+}
+
+.dark-mode .bg-light hr{
+  border-color:#555;
+}
+
+.dark-mode .text-success{
+  color:#4caf50 !important;
+}
+
+

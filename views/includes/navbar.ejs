@@ -1,0 +1,131 @@
+<style>
+  .search-btn{
+    background-color: #fe424d;
+    color: #fff;
+    border-radius: 25px;
+    padding: 0 1rem 0 1rem;
+  }
+  .search-btn:hover {
+    background-color: #fe424d;
+    color: #fff;
+  }
+  .search-btn i{
+    display: inline;
+    margin-right: 0.5rem;  
+    }
+    .search-inp{
+      border-radius: 25px;
+      padding: 0.5rem 3rem 0.5rem 3rem;
+      font-size: 1rem;
+    }
+    /* user dropdown */
+  .user-menu {
+    position: relative;
+    display: inline-block;
+  }
+
+  .user-btn {
+    cursor: pointer;
+    padding: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: white;
+    min-width: 160px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+  }
+
+  .dropdown-menu a {
+    display: block;
+    padding: 10px;
+    text-decoration: none;
+    color:  #000000 !important;
+  };
+  
+
+  .dropdown-menu a:hover {
+    background-color: #f2f2f2;
+  }
+
+  .user-menu:hover .dropdown-menu {
+    display: block;
+  }
+  
+  /* LIGHT MODE */
+.dropdown-menu {
+  background-color: #ffffff !important;
+}
+
+.dropdown-menu a {
+  color: #000000 !important;
+}
+
+/* DARK MODE (FIXED CLASS NAME) */
+body.dark-mode .dropdown-menu {
+  background-color: #2c2c2c !important;
+  border: 1px solid #444;
+}
+
+body.dark-mode .dropdown-menu a {
+  color: #ffffff !important;
+}
+
+body.dark-mode .dropdown-menu a:hover {
+  background-color: #3a3a3a !important;
+}
+
+  
+</style>
+
+
+<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/listings"><i class="fa-regular fa-compass"></i></a>
+    <button class="navbar-toggler" type="button" 
+    data-bs-toggle="collapse" 
+    data-bs-target="#navbarNavAltMarkup" 
+   >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <div class="navbar-nav">
+        <a class="nav-link" href="/listings">Explore</a>
+      </div>
+      <button onclick="toggleDarkMode()" class="btn btn-dark">🌙</button>
+      <div class="navbar-nav ms-auto">
+         <form class="d-flex" role="search"  action="/listings/search" method="get">
+         <input class="form-control me-2 search-inp" type="search" placeholder="Search destinations" name="query" />
+         <button class="btn search-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    </form>
+   
+      </div>
+      <div class="navbar-nav ms-auto">
+        <a class="nav-link" href="/listings/new">Airbnb your home</a>
+        <% if(!currUser) { %>
+        <a class="nav-link"  href="/signup"><b>Sign up</b></a>
+        <a class="nav-link" href="/login"><b>Log in</b></a>
+        <%} else { %>
+       <div class="user-menu">
+           <span class="user-btn">👤 <%= currUser.username %></span>
+
+              <div class="dropdown-menu">
+               <a href="/profile">Profile</a>
+               <a href="/profile/edit">Edit Profile</a>
+               <a href="/listings/pending">Pending Blogs</a>
+               <a href="/logout">Logout</a>
+             </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</nav>

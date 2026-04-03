@@ -1,0 +1,44 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+
+    <div class="col-md-6">
+
+      <div class="card shadow p-4 text-center">
+
+        <!-- Profile Picture -->
+        <div class="mb-3">
+          <img 
+            src="<%= user.image?.url || 'https://via.placeholder.com/150?text=Avatar' %>" 
+            alt="<%= user.username %>'s Profile"
+            style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #fe424d;">
+        </div>
+
+        <!-- Username -->
+        <h3><%= user.username %></h3>
+
+        <!-- Email -->
+        <p class="text-muted"><%= user.email %></p>
+
+        <hr>
+
+        <!-- Buttons -->
+        <div class="d-flex justify-content-center gap-3">
+
+          <a href="/profile/edit" class="btn btn-danger">
+            <i class="fa-solid fa-edit"></i> Edit Profile
+          </a>
+
+          <a href="/logout" class="btn btn-outline-dark">
+            <i class="fa-solid fa-sign-out-alt"></i> Logout
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

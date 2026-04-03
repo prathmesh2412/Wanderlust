@@ -1,0 +1,24 @@
+<% layout("layouts/boilerplate") %>
+
+<h3>Pending Blogs</h3>
+
+<% blogs.forEach(blog => { %>
+
+  <div class="card p-3 mb-3">
+    <p><%= blog.content %></p>
+    <small>By <%= blog.author.username %></small>
+
+    <form action="/listings/blogs/<%= blog._id %>/approve" method="POST">
+    <button class="btn btn-success mt-2">Approve</button>
+    </form>
+
+    <form action="/listings/blogs/<%= blog._id %>/reject" method="POST">
+      <button class="btn btn-danger mt-2">Reject</button>
+    </form>
+     
+    <form action="/listings/blogs/<%= blog._id %>?_method=DELETE" method="POST">
+    <button class="btn btn-dark mt-2">Delete</button>
+    </form>
+  </div>
+
+<% }) %>

@@ -1,0 +1,460 @@
+<% layout("layouts/boilerplate") %>
+<script>
+  // Consolidate all backend data in a single script block at the top
+  const pageData = {
+    mapToken: "<%= process.env.MAP_TOKEN %>",
+    listing: <%- JSON.stringify(listing) %>,
+    pricePerNight: <%= listing.price %>,
+    listingId: "<%= listing._id %>"
+  };
+
+  // Expose commonly used variables globally for external scripts (e.g., map.js)
+  const mapToken = pageData.mapToken;
+  const listing = pageData.listing;
+</script>
+<div class="row mt-3">
+   <div class="col-8 offset-3">
+     <h3><%= listing.title %></h3>
+     <% if(listing.category) { %>
+       <p class="text-muted">Category: <strong><%= listing.category %></strong></p>
+     <% } %>
+   </div>
+   <div class="card col-6 offset-3 show-card  listing-card">
+      <img
+       src="<%= listing.image.url %>" 
+       class="card-img-top show-img"
+       alt="Listing_Image">
+      <div class="card-body">
+        <p class="card-text">Owned by <i><%= listing.owner.username %></i></p>
+        <p class="card-text"><%= listing.description %> </p>
+        <p class="card-text"> &#8377; <%= listing.price.toLocaleString("en-IN") %></p>
+        <p class="card-text"><%= listing.location %></p>
+        <p class="card-text"><%= listing.country %></p>
+      </div>
+    </div>
+
+   <br>
+
+  <% if(currUser && listing.owner._id.equals(currUser._id)) { %>
+  <div class="btns">
+         <a href="/listings/<%= listing._id %>/edit" 
+            class="btn btn-dark col-1 offset-3 edit-btn"
+            >Edit</a>
+
+         <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
+           <button class="btn btn-dark offset-5 ">Delete</button>
+         </form>
+  </div>
+  <% } %>
+
+  <!-- BOOKING FORM -->
+  <% if(currUser && !listing.owner._id.equals(currUser._id)) { %>
+  <div class="col-8 offset-3 mb-4">
+    <div class="card p-4 border-primary">
+      <h4 class="card-title mb-3">Book This Listing</h4>
+      <form id="bookingForm" class="needs-validation" novalidate>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="checkIn" class="form-label">Check-in Date</label>
+            <input 
+              type="date" 
+              class="form-control" 
+              id="checkIn" 
+              name="checkIn"
+              required
+              min="<%= new Date().toISOString().split('T')[0] %>"
+            />
+            <div class="invalid-feedback">Please provide a valid check-in date.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="checkOut" class="form-label">Check-out Date</label>
+            <input 
+              type="date" 
+              class="form-control" 
+              id="checkOut" 
+              name="checkOut"
+              required
+            />
+            <div class="invalid-feedback">Please provide a valid check-out date.</div>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <p class="text-muted">
+              <strong>Price per night:</strong> ₹<%= listing.price.toLocaleString("en-IN") %>
+            </p>
+          </div>
+        </div>
+
+        <div class="row mt-2 p-3 bg-light rounded">
+          <div class="col-md-6">
+            <p class="mb-2">
+              <strong>Subtotal:</strong> <span id="subtotal">₹0</span>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-2">
+              <strong>GST (18%):</strong> <span id="gstAmount">₹0</span>
+            </p>
+          </div>
+          <div class="col-md-12">
+            <hr class="my-2">
+            <p class="mb-0">
+              <strong class="text-success">Total Price:</strong> <span id="totalPrice" class="text-success" style="font-size: 1.2em;">₹0</span>
+            </p>
+          </div>
+        </div>
+
+        <button 
+          type="button" 
+          class="btn btn-primary mt-3 w-100"
+          id="bookNowBtn"
+          onclick="initiateBooking('<%= listing._id %>')"
+        >
+          Book Now
+        </button>
+      </form>
+    </div>
+  </div>
+  <% } %>
+
+  <% if(!currUser) { %>
+  <div class="col-8 offset-3 mb-4">
+    <div class="card p-4 border-warning">
+      <p class="text-warning">
+        <strong>⚠️ Please <a href="/login">log in</a> to book this listing.</strong>
+      </p>
+    </div>
+  </div>
+  <% } %>
+  
+  <div class="col-8 offset-3 mb-3">
+    <% if(currUser) { %>
+    <hr />
+    <h4>Leave a Review</h4>
+    <form 
+      action="/listings/<%= listing._id %>/reviews"
+      method="POST" 
+      novalidate 
+      class="needs-validation" 
+      >
+
+    <div class="mb-3 mt-3">
+     <label for="rating" class="form-label ">Rating:</label>
+     <fieldset class="starability-slot">
+      <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
+      <input type="radio" id="first-rate1" name="review[rating]" value="1" />
+      <label for="first-rate1" title="Terrible">1 star</label>
+      <input type="radio" id="first-rate2" name="review[rating]" value="2" />
+      <label for="first-rate2" title="Not good">2 stars</label>
+      <input type="radio" id="first-rate3" name="review[rating]" value="3" />
+      <label for="first-rate3" title="Average">3 stars</label>
+      <input type="radio" id="first-rate4" name="review[rating]" value="4" />
+      <label for="first-rate4" title="Very good">4 stars</label>
+      <input type="radio" id="first-rate5" name="review[rating]" value="5" />
+      <label for="first-rate5" title="Amazing">5 stars</label>
+     </fieldset>
+      </div>
+
+
+      <div class="mb-3 mt-3">
+        <label for="comment" class="form-label">Comments</label>
+        <textarea 
+          name="review[comment]" 
+          id="comment"
+          cols="30"
+          rows="5"
+          class="form-control"
+          required
+        ></textarea>
+        <div class="invalid-feedback">Please add some comments for review</div>
+      </div>
+      <button class="btn btn-outline-dark">Submit</button>
+    </form>
+    <hr>
+    <% } %>
+    
+
+    <% if(listing.reviews.length > 0) { %>
+    <div class="row">
+      <p><b>All Reviews :</b></p>
+      <% for(review of listing.reviews) { %>
+      <div class="card col-5 ms-3 mb-3">
+        <div class="card-body">
+          <h5 class="card-title">@<%= review.author.username %></h5>
+          <p class="starability-result card-text" data-rating="<%= review.rating %>"></p>
+          <p class="card-text"><%= review.comment %></p>
+          <p class="card-text"> Stars</p>
+          <form
+           class="mb-3"
+            action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" 
+            method="POST"
+          >
+            <button class="btn btn-dark btn-sm">Delete</button>
+          </form>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
+  <!-- MAP -->
+  <div class="col-8 offset-3 mb-3">
+    <h3>Where you'll be</h3>
+    <div id="map"></div>
+  </div>
+
+ </div>
+
+ <hr>
+
+<!-- BLOG FORM  -->
+ <% if(currUser) { %>
+  <div class="col-8 offset-3">
+    <h4>Add Blog</h4>
+
+    <form action="/listings/<%= listing._id %>/blogs" method="POST">
+      <textarea name="content" class="form-control" required></textarea>
+      <button class="btn btn-danger mt-2">Submit</button>
+    </form>
+  </div>
+ <% } %>
+
+<hr>
+
+<!-- ✅ BLOG LIST -->
+ <div class="col-8 offset-3">
+
+  <h4>Blogs</h4>
+
+  <% if (listing.blogs && listing.blogs.length > 0) { %>
+
+    <% listing.blogs.forEach(blog => { %>
+
+      <% if (blog.status === "approved") { %>
+
+        <div class="card p-3 mb-2">
+          <p><%= blog.content %></p>
+          <small>By <%= blog.author.username %></small>
+          <% if(currUser && listing.owner._id.equals(currUser._id)) { %>
+           <form action="/listings/blogs/<%= blog._id %>?_method=DELETE" method="POST">
+             <button class="btn btn-sm btn-dark">Delete</button>
+           </form>
+          <% } %>
+        </div>
+
+      <% } %>
+
+    <% }) %>
+
+  <% } else { %>
+
+    <p>No blogs yet</p>
+
+  <% } %>
+
+ </div>
+
+<script src="/js/map.js" ></script>
+
+<!-- Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<!-- Booking Script -->
+<script>
+  // Destructure data from consolidated pageData object
+  const { pricePerNight, listingId } = pageData;
+
+  // Calculate total price when dates change
+  function calculateTotalPrice() {
+    const checkIn = document.getElementById("checkIn").value;
+    const checkOut = document.getElementById("checkOut").value;
+
+    if (!checkIn || !checkOut) {
+      document.getElementById("subtotal").innerText = "₹0";
+      document.getElementById("gstAmount").innerText = "₹0";
+      document.getElementById("totalPrice").innerText = "₹0";
+      return;
+    }
+
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const timeDifference = checkOutDate - checkInDate;
+    const numberOfDays = Math.ceil(timeDifference / (1000 * 3600 * 24));
+
+    if (numberOfDays <= 0) {
+      document.getElementById("subtotal").innerText = "₹0";
+      document.getElementById("gstAmount").innerText = "₹0";
+      document.getElementById("totalPrice").innerText = "₹0";
+      return;
+    }
+
+    const subtotal = pricePerNight * numberOfDays;
+    const gstAmount = Math.round(subtotal * 0.18 * 100) / 100; // 18% GST
+    const totalPrice = subtotal + gstAmount;
+
+    document.getElementById("subtotal").innerText = "₹" + subtotal.toLocaleString("en-IN");
+    document.getElementById("gstAmount").innerText = "₹" + gstAmount.toLocaleString("en-IN");
+    document.getElementById("totalPrice").innerText = "₹" + totalPrice.toLocaleString("en-IN");
+  }
+
+  // Add event listeners for date inputs
+  document.getElementById("checkIn").addEventListener("change", calculateTotalPrice);
+  document.getElementById("checkOut").addEventListener("change", calculateTotalPrice);
+
+  // Validate form
+  function validateBookingForm() {
+    const form = document.getElementById("bookingForm");
+    if (!form.checkValidity()) {
+      return false;
+    }
+
+    const checkIn = document.getElementById("checkIn").value;
+    const checkOut = document.getElementById("checkOut").value;
+
+    if (!checkIn || !checkOut) {
+      alert("Please provide both check-in and check-out dates");
+      return false;
+    }
+
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+
+    if (checkOutDate <= checkInDate) {
+      alert("Check-out date must be after check-in date");
+      return false;
+    }
+
+    return true;
+  }
+
+  // Initiate booking
+  async function initiateBooking(listingId) {
+    if (!validateBookingForm()) {
+      return;
+    }
+
+    const checkIn = document.getElementById("checkIn").value;
+    const checkOut = document.getElementById("checkOut").value;
+    
+    try {
+      const response = await fetch(`/bookings/${listingId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          checkIn: checkIn,
+          checkOut: checkOut,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        alert("Error: " + data.message);
+        return;
+      }
+
+      // Open Razorpay checkout
+      openRazorpayCheckout(data);
+    } catch (error) {
+      console.error("Error initiating booking:", error);
+      alert("An error occurred while initiating booking. Please try again.");
+    }
+  }
+
+  // Open Razorpay Checkout
+  function openRazorpayCheckout(data) {
+    const options = {
+      key: data.keyId, // Your Razorpay Key ID
+      amount: Math.round(data.totalPrice * 100), // Amount in paise
+      currency: "INR",
+      name: "Wonderlust",
+      description: "Booking for listing",
+      order_id: data.orderId, // Razorpay order ID
+      prefill: {
+        name: data.userName,
+        email: data.userEmail,
+      },
+      theme: {
+        color: "#3399cc",
+      },
+      handler: function (response) {
+        // Handle successful payment
+        verifyPayment(response, data.bookingId);
+      },
+      modal: {
+        ondismiss: function () {
+          // Handle payment cancellation
+          handlePaymentCancellation(data.bookingId);
+        },
+      },
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+
+    // Handle errors
+    rzp.on("payment.failed", function (response) {
+      handlePaymentFailure(response, data.bookingId);
+    });
+  }
+
+  // Verify Payment
+  async function verifyPayment(response, bookingId) {
+    try {
+      const verificationResponse = await fetch("/bookings/verify/payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+          bookingId: bookingId,
+        }),
+      });
+
+      const data = await verificationResponse.json();
+
+      if (data.success) {
+        alert("Payment successful! Your booking has been confirmed.");
+        // Redirect to bookings page or listing page
+        window.location.href = `/listings/${listingId}`;
+      } else {
+        alert("Payment verification failed. Please contact support.");
+        handlePaymentFailure(null, bookingId);
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      alert("An error occurred while verifying payment. Please contact support.");
+      handlePaymentFailure(null, bookingId);
+    }
+  }
+
+  // Handle Payment Failure
+  async function handlePaymentFailure(response, bookingId) {
+    try {
+      await fetch("/bookings/payment/failed", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bookingId: bookingId,
+        }),
+      });
+      alert("Payment failed. Please try again.");
+    } catch (error) {
+      console.error("Error handling payment failure:", error);
+    }
+  }
+
+  // Handle Payment Cancellation
+  function handlePaymentCancellation(bookingId) {
+    alert("You cancelled the payment. Your booking was not completed.");
+  }
+</script>

@@ -1,0 +1,114 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    
+    <div class="col-md-6">
+
+      <div class="card shadow p-4">
+        <h3 class="text-center mb-4">
+          <i class="fa-solid fa-user-edit"></i> Edit Profile
+        </h3>
+
+        <form action="/profile/edit?_method=PUT" method="POST" enctype="multipart/form-data">
+
+          <!-- Current Profile Picture -->
+          <div class="mb-4 text-center">
+            <label class="form-label d-block mb-3"><strong>Current Profile Picture</strong></label>
+            <img 
+              src="<%= user.image?.url || 'https://via.placeholder.com/150?text=Avatar' %>" 
+              alt="<%= user.username %>'s Profile"
+              style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #fe424d;">
+          </div>
+
+          <!-- Username -->
+          <div class="mb-3">
+            <label class="form-label"><i class="fa-solid fa-user"></i> Username</label>
+            <input 
+              type="text" 
+              name="username" 
+              class="form-control" 
+              value="<%= user.username %>" 
+              required>
+            <small class="text-muted">Your username cannot be changed</small>
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label class="form-label"><i class="fa-solid fa-envelope"></i> Email</label>
+            <input 
+              type="email" 
+              name="email" 
+              class="form-control" 
+              value="<%= user.email %>" 
+              required>
+          </div>
+
+          <!-- Profile Picture Upload -->
+          <div class="mb-3">
+            <label class="form-label"><i class="fa-solid fa-image"></i> Upload New Profile Picture</label>
+            <input 
+              type="file" 
+              name="image" 
+              class="form-control"
+              accept="image/jpeg,image/png,image/jpg"
+              id="imageInput">
+            <small class="text-muted">Accepted formats: JPG, JPEG, PNG (Max 5MB)</small>
+            
+            <!-- Image Preview -->
+            <div id="imagePreview" class="mt-2"></div>
+          </div>
+
+          <!-- Password -->
+          <div class="mb-3">
+            <label class="form-label"><i class="fa-solid fa-lock"></i> New Password</label>
+            <input 
+              type="password" 
+              name="password" 
+              class="form-control" 
+              placeholder="Leave blank if not changing">
+            <small class="text-muted">Passwords must be at least 6 characters</small>
+          </div>
+
+          <hr>
+
+          <!-- Submit & Cancel Buttons -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger flex-grow-1">
+              <i class="fa-solid fa-save"></i> Update Profile
+            </button>
+            <a href="/profile" class="btn btn-outline-secondary flex-grow-1">
+              <i class="fa-solid fa-arrow-left"></i> Cancel
+            </a>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Image preview functionality
+  document.getElementById('imageInput').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    const file = e.target.files[0];
+    
+    if(file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        preview.innerHTML = `
+          <div class="mt-2 text-center">
+            <p class="text-muted">Preview:</p>
+            <img src="${event.target.result}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+          </div>
+        `;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      preview.innerHTML = '';
+    }
+  });
+</script>
