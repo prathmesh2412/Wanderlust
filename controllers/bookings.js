@@ -22,7 +22,6 @@ module.exports.createBookingOrder = async (req, res) => {
     const { id } = req.params;
     const { checkIn, checkOut } = req.body;
 
-    // Validation
     if (!checkIn || !checkOut) {
       return res.status(400).json({
         success: false,
@@ -38,6 +37,7 @@ module.exports.createBookingOrder = async (req, res) => {
     }
 
     const listing = await Listing.findById(id);
+
     if (!listing) {
       return res.status(404).json({
         success: false,
@@ -48,7 +48,6 @@ module.exports.createBookingOrder = async (req, res) => {
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
 
-    // ✅ Prevent double booking
     const conflict = await Booking.findOne({
       listing: id,
       paymentStatus: "success",
@@ -63,22 +62,20 @@ module.exports.createBookingOrder = async (req, res) => {
       });
     }
 
-    // Price calculation
     const nights = Math.ceil(
       (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)
     );
+
     const totalPrice = nights * listing.price;
 
     console.log("💰 Total:", totalPrice);
 
-    // Razorpay order
     const order = await razorpay.orders.create({
       amount: totalPrice * 100,
       currency: "INR",
       receipt: `booking_${Date.now()}`,
     });
 
-    // Save booking (pending)
     const booking = new Booking({
       listing: id,
       user: req.user._id,
@@ -103,6 +100,7 @@ module.exports.createBookingOrder = async (req, res) => {
 
   } catch (error) {
     console.error("💥 createBookingOrder error:", error);
+
     res.status(500).json({
       success: false,
       message: "Error creating booking",
@@ -132,13 +130,13 @@ module.exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // Verify signature
     const hmac = crypto.createHmac(
       "sha256",
       process.env.RAZORPAY_KEY_SECRET
     );
 
     hmac.update(razorpayOrderId + "|" + razorpayPaymentId);
+
     const generatedSignature = hmac.digest("hex");
 
     if (generatedSignature !== razorpaySignature) {
@@ -163,61 +161,50 @@ module.exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // Prevent double booking again
-    const conflict = await Booking.findOne({
-      listing: booking.listing,
-      paymentStatus: "success",
-      _id: { $ne: booking._id },
-      checkIn: { $lt: booking.checkOut },
-      checkOut: { $gt: booking.checkIn },
-    });
-
-    if (conflict) {
-      await Booking.findByIdAndUpdate(bookingId, {
-        paymentStatus: "failed",
-      });
-
-      return res.status(400).json({
-        success: false,
-        message: "Dates already booked",
-      });
-    }
-
-    // Confirm booking
     booking.paymentStatus = "success";
     booking.razorpayPaymentId = razorpayPaymentId;
     booking.razorpaySignature = razorpaySignature;
 
     await booking.save();
 
-    // Populate owner
     await booking.populate({
       path: "listing",
       populate: { path: "owner" },
     });
 
-   const user = await User.findById(booking.user);
+    const user = await User.findById(booking.user);
 
-   let emailStatus = "failed";
+    let emailStatus = "failed";
 
-   try {
-     console.log("📧 Sending email...");
+    try {
+      console.log("📧 Sending email...");
 
-     await sendBookingNotification(booking, booking.listing, user);
+      await sendBookingNotification(booking, booking.listing, user);
 
-     console.log("✅ Email sent successfully");
+      console.log("✅ Email sent successfully");
 
-      emailStatus = "sent"; // ⭐ FIX HERE
+      emailStatus = "sent";
+
     } catch (err) {
-        console.error("❌ Email failed FULL ERROR:");
-       console.error(err);
-}
+      console.error("❌ Email failed FULL ERROR:");
+      console.error(err);
+    }
 
-res.json({
-  success: true,
-  message: "Booking confirmed",
-  emailStatus,
-});
+    return res.json({
+      success: true,
+      message: "Booking confirmed",
+      emailStatus,
+    });
+
+  } catch (error) {
+    console.error("💥 verifyPayment error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Verification failed",
+    });
+  }
+};
 
 
 // ============================================================
