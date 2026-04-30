@@ -421,7 +421,7 @@
       prefill: {
         name: data.userName || "Test User",      // From backend: data.userName
         email: data.userEmail || "test@example.com", // From backend: data.userEmail
-        contact: "", // Optional: Add if you collect phone numbers
+        contact: '9999999999', // Domestic Indian contact to signal Indian transaction
       },
       theme: {
         color: "#3399cc",
@@ -469,14 +469,17 @@
 
     // Handle errors (alternative to onfail)
     rzp.on("payment.failed", function (response) {
-      console.error("Razorpay payment.failed event:", {
-        errorCode: response.error.code,
-        errorDescription: response.error.description,
-        errorSource: response.error.source,
-        errorReason: response.error.reason,
-        paymentId: response.error.payment_id,
-        orderId: response.error.order_id
-      });
+      // Log specific error details for debugging
+      console.error("=== RAZORPAY PAYMENT FAILED ===");
+      console.error("Error Description:", response.error.description);
+      console.error("Error Step:", response.error.step);
+      console.error("Error Code:", response.error.code);
+      console.error("Error Source:", response.error.source);
+      console.error("Error Reason:", response.error.reason);
+      console.error("Payment ID:", response.error.payment_id);
+      console.error("Order ID:", response.error.order_id);
+      console.error("Full Response:", response);
+      
       handlePaymentFailure(response, data.bookingId);
     });
   }

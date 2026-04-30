@@ -182,7 +182,7 @@ module.exports.verifyPayment = async (req, res, next) => {
         razorpayPaymentId,
         razorpaySignature,
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!booking) {
@@ -217,7 +217,7 @@ module.exports.handlePaymentFailure = async (req, res, next) => {
     const booking = await Booking.findByIdAndUpdate(
       bookingId,
       { paymentStatus: "failed" },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     return res.json({
@@ -297,7 +297,7 @@ module.exports.cancelBooking = async (req, res, next) => {
         bookingStatus: "cancelled",
         cancelledAt: new Date(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.json({
