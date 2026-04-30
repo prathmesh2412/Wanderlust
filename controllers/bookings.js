@@ -240,11 +240,7 @@ module.exports.paymentSuccess = async (req, res, next) => {
   try {
     const { id: bookingId } = req.params;
 
-    const booking = await Booking.findByIdAndUpdate(
-      bookingId,
-      { paymentStatus: "success" },
-      { new: true }
-    ).populate({
+    const booking = await Booking.findById(bookingId).populate({
       path: "listing",
       populate: { path: "owner" },
     });
@@ -256,13 +252,40 @@ module.exports.paymentSuccess = async (req, res, next) => {
       });
     }
 
-    console.log("Booking updated");
+    console.log("Checking availability...");
+
+    const conflictingBooking = await Booking.findOne({
+      listing: booking.listing._id,
+      paymentStatus: "success",
+      _id: { $ne: booking._id },
+      checkIn: { $lt: booking.checkOut },
+      checkOut: { $gt: booking.checkIn },
+    });
+
+    if (conflictingBooking) {
+      booking.paymentStatus = "failed";
+      await booking.save();
+
+      return res.status(409).json({
+        success: false,
+        message: "Dates already booked",
+      });
+    }
+
+    booking.paymentStatus = "success";
+    await booking.save();
+
+    console.log("Booking confirmed");
 
     const user = await User.findById(booking.user);
 
-    await sendBookingNotification(booking, booking.listing, user);
+    try {
+      await sendBookingNotification(booking, booking.listing, user);
+      console.log("Email sent successfully");
+    } catch (emailError) {
+      console.error("Error sending confirmation email:", emailError);
+    }
 
-    console.log("Email sent to owner");
     console.log("Payment successful");
 
     res.json({
