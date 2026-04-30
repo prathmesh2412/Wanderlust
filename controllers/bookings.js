@@ -20,14 +20,19 @@ module.exports.createBookingOrder = async (req, res) => {
     const { id } = req.params;
     const { checkIn, checkOut } = req.body;
 
-    // Validate required fields
-    if (!checkIn || !checkOut) {
-      console.log("❌ Missing checkIn or checkOut");
-      return res.status(400).json({
-        success: false,
-        message: "Check-in and check-out dates are required"
-      });
-    }
+   const booking = await Booking.findById(bookingId);
+
+     if (!booking) {
+            return res.status(404).json({
+          success: false,
+            message: "Booking not found",
+        });
+      }
+
+      const checkIn = booking.checkIn;
+      const checkOut = booking.checkOut;
+
+     console.log("📅 Using DB dates:", checkIn, checkOut);
 
     if (!req.user) {
       console.log("❌ User not authenticated");
