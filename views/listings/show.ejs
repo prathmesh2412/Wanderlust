@@ -367,13 +367,25 @@
 
   // Open Razorpay Checkout
   function openRazorpayCheckout(data) {
+    // CRITICAL: Ensure amount matches backend exactly (in paise)
+    // Backend sends totalPrice in rupees, Razorpay needs paise (amount * 100)
+    const amountInPaise = Math.round(data.totalPrice * 100);
+    
+    console.log("Razorpay Options Debug:", {
+      key: data.keyId,
+      amount: amountInPaise,
+      currency: "INR",
+      order_id: data.orderId,
+      backendTotalPrice: data.totalPrice
+    });
+
     const options = {
       key: data.keyId, // Your Razorpay Key ID
-      amount: Math.round(data.totalPrice * 100), // Amount in paise
+      amount: amountInPaise, // Amount in Paise (must match backend order amount)
       currency: "INR",
       name: "Wonderlust",
       description: "Booking for listing",
-      order_id: data.orderId, // Razorpay order ID
+      order_id: data.orderId, // Razorpay order ID - MUST match backend created order
       prefill: {
         name: data.userName,
         email: data.userEmail,
@@ -383,7 +395,7 @@
       },
       handler: function (response) {
         // Handle successful payment
-        verifyPayment(response, data.bookingId);
+        verifyPayment(response, data.bookingId, data.listingId);
       },
       modal: {
         ondismiss: function () {
@@ -391,38 +403,68 @@
           handlePaymentCancellation(data.bookingId);
         },
       },
+      // Add onfail handler to capture specific Razorpay error codes
+      onfail: function (response) {
+        console.error("Razorpay Payment Failed:", {
+          errorCode: response.error.code,
+          errorDescription: response.error.description,
+          errorSource: response.error.source,
+          errorStep: response.error.step,
+          errorReason: response.error.reason,
+          fullResponse: response
+        });
+        alert(`Payment failed: ${response.error.description} (Code: ${response.error.code})`);
+      },
     };
 
     const rzp = new Razorpay(options);
     rzp.open();
 
-    // Handle errors
+    // Handle errors (alternative to onfail)
     rzp.on("payment.failed", function (response) {
+      console.error("Razorpay payment.failed event:", {
+        errorCode: response.error.code,
+        errorDescription: response.error.description,
+        errorSource: response.error.source,
+        errorReason: response.error.reason,
+        paymentId: response.error.payment_id,
+        orderId: response.error.order_id
+      });
       handlePaymentFailure(response, data.bookingId);
     });
   }
 
   // Verify Payment
-  async function verifyPayment(response, bookingId) {
+  async function verifyPayment(response, bookingId, listingId) {
+    // Debug: Log the Razorpay response keys
+    console.log("Razorpay Response Keys:", Object.keys(response));
+    console.log("Raw Razorpay Response:", response);
+    
+    // Map Razorpay's snake_case keys to controller's camelCase keys
+    const verificationData = {
+      razorpayOrderId: response.razorpay_order_id,
+      razorpayPaymentId: response.razorpay_payment_id,
+      razorpaySignature: response.razorpay_signature,
+      bookingId: bookingId,
+    };
+    
+    console.log("Sending to /bookings/verify/payment:", verificationData);
+
   try {
     const verificationResponse = await fetch("/bookings/verify/payment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      // Use the camelCase keys that your controller expects
-      body: JSON.stringify({
-        razorpayOrderId: response.razorpay_order_id,
-        razorpayPaymentId: response.razorpay_payment_id,
-        razorpaySignature: response.razorpay_signature,
-        bookingId: bookingId,
-      }),
+      body: JSON.stringify(verificationData),
     });
 
     const data = await verificationResponse.json();
+    console.log("Verification Response:", data);
 
     if (data.success) {
       alert("Payment successful! Your booking has been confirmed.");
+      // Ensure listingId is correctly passed to the redirect
       window.location.href = `/listings/${listingId}`;
     } else {
       // Log the specific error from the server to your browser console
