@@ -145,15 +145,23 @@ module.exports.verifyPayment = async (req, res) => {
       bookingId,
     } = req.body;
 
-    console.log("🔐 Verifying payment...");
+    // Validate required payment fields
+    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature || !bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required payment details"
+      });
+    }
 
-    // Verify signature
+    console.log("🔐 Verifying Razorpay signature...");
+
+    // Verify Razorpay signature
     const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
     hmac.update(razorpayOrderId + "|" + razorpayPaymentId);
     const generatedSignature = hmac.digest("hex");
 
     if (generatedSignature !== razorpaySignature) {
-      console.log("❌ Payment verification failed");
+      console.log("❌ Payment signature verification failed");
 
       await Booking.findByIdAndUpdate(bookingId, {
         paymentStatus: "failed",
@@ -165,21 +173,27 @@ module.exports.verifyPayment = async (req, res) => {
       });
     }
 
-    console.log("✅ Payment verified");
+    console.log("✅ Payment signature verified");
 
-    // Get booking
+    // Fetch booking using bookingId from database
+    console.log("📋 Fetching booking from database...");
     const booking = await Booking.findById(bookingId);
 
     if (!booking) {
+      console.log("❌ Booking not found:", bookingId);
       return res.status(404).json({
         success: false,
         message: "Booking not found",
       });
     }
 
-    console.log("🔍 Checking availability...");
+    console.log("✅ Booking fetched:", booking._id);
+    console.log("📅 Check-in:", booking.checkIn);
+    console.log("📅 Check-out:", booking.checkOut);
 
-    // Prevent double booking
+    // Check availability using booking.checkIn and booking.checkOut from database
+    console.log("🔍 Checking availability using database dates...");
+
     const conflict = await Booking.findOne({
       listing: booking.listing,
       paymentStatus: "success",
@@ -193,7 +207,7 @@ module.exports.verifyPayment = async (req, res) => {
     });
 
     if (conflict) {
-      console.log("❌ Dates already booked");
+      console.log("❌ Dates already booked by another booking");
 
       await Booking.findByIdAndUpdate(bookingId, {
         paymentStatus: "failed",
@@ -205,28 +219,33 @@ module.exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // Confirm booking
+    console.log("✅ Availability check passed");
+
+    // Update paymentStatus to "success"
+    console.log("💳 Updating payment status to 'success'...");
     booking.paymentStatus = "success";
     booking.razorpayPaymentId = razorpayPaymentId;
     booking.razorpaySignature = razorpaySignature;
 
     await booking.save();
+    console.log("✅ Payment status updated to 'success'");
 
-    console.log("✅ Booking confirmed");
-
-    // Populate owner
+    // Populate listing.owner
+    console.log("👤 Populating listing owner...");
     await booking.populate({
       path: "listing",
       populate: { path: "owner" },
     });
+    console.log("✅ Owner populated");
 
+    // Get user for email
     const user = await User.findById(booking.user);
 
-    // Send email
+    // Send email to owner
     try {
-      console.log("📧 Sending email...");
+      console.log("📧 Sending email to owner...");
       await sendBookingNotification(booking, booking.listing, user);
-      console.log("📧 Email sent successfully");
+      console.log("✅ Email sent successfully");
     } catch (err) {
       console.error("❌ Email error:", err.message);
     }
@@ -237,7 +256,7 @@ module.exports.verifyPayment = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("💥 Error:", error);
+    console.error("💥 Error in verifyPayment:", error);
     res.status(500).json({
       success: false,
       message: error.message,
