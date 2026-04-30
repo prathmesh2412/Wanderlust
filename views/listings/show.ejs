@@ -515,7 +515,7 @@
     if (data.success) {
       alert("Payment successful! Your booking has been confirmed.");
       // Ensure listingId is correctly passed to the redirect
-      window.location.href = `/listings/${listingId}`;
+      window.location.href = `/listings/${pageData.listingId}`;
     } else {
       // Log the specific error from the server to your browser console
       console.error("Verification failed:", data.message);

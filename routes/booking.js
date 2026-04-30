@@ -63,4 +63,22 @@ router.delete(
   wrapAsync(bookingController.cancelBooking)
 );
 
+/**
+ * Create booking API (new)
+ * POST /bookings
+ */
+router.post("/", isLoggedIn, wrapAsync(bookingController.createBooking));
+
+/**
+ * Get booked dates for a listing
+ * GET /bookings/listing/:id/booked-dates
+ */
+router.get("/listing/:id/booked-dates", wrapAsync(bookingController.getBookedDates));
+
+/**
+ * Simulate payment success
+ * POST /bookings/payment/simulate
+ */
+router.post("/payment/simulate", bookingController.simulatePayment);
+
 module.exports = router;

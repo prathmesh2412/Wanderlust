@@ -2,7 +2,9 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Booking = require("../models/booking");
 const Listing = require("../models/listing");
+const User = require("../models/user");
 const ExpressError = require("../utils/ExpressError");
+const { sendBookingNotification } = require("../utils/email");
 
 // Lazy initialize Razorpay instance (only when needed)
 let razorpayInstance = null;
@@ -352,4 +354,116 @@ module.exports.getBookingDetails = async (req, res, next) => {
       message: error.message || "Failed to fetch booking details",
     });
   }
+};
+
+/**
+ * Check availability for dates
+ * @param {String} listingId - Listing ID
+ * @param {Date} checkIn - Check-in date
+ * @param {Date} checkOut - Check-out date
+ * @returns {Boolean} - True if available
+ */
+const checkAvailability = async (listingId, checkIn, checkOut) => {
+  const overlappingBookings = await Booking.find({
+    listing: listingId,
+    paymentStatus: 'success',
+    $or: [
+      { checkIn: { $lt: checkOut }, checkOut: { $gt: checkIn } }
+    ]
+  });
+  return overlappingBookings.length === 0;
+};
+
+/**
+ * Create booking API
+ * POST /bookings
+ */
+/**
+ * Create booking API
+ * POST /bookings
+ */
+module.exports.createBooking = async (req, res, next) => {
+  try {
+    const { listingId, checkIn, checkOut, totalPrice, paymentSuccess } = req.body;
+
+    console.log(`📅 Booking request started for user ${req.user._id}, listing ${listingId}`);
+
+    // Validate input
+    if (!listingId || !checkIn || !checkOut || !totalPrice) {
+      console.error(`❌ Booking validation failed: Missing required fields for user ${req.user._id}`);
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    if (!paymentSuccess) {
+      console.error(`❌ Booking failed: Payment not successful for user ${req.user._id}`);
+      return res.status(400).json({ success: false, message: "Payment not successful" });
+    }
+
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+
+    if (checkInDate >= checkOutDate) {
+      console.error(`❌ Booking validation failed: Invalid dates for user ${req.user._id}`);
+      return res.status(400).json({ success: false, message: "Invalid dates" });
+    }
+
+    // Check availability
+    console.log(`🔍 Checking availability for listing ${listingId} from ${checkIn} to ${checkOut}`);
+    const isAvailable = await checkAvailability(listingId, checkInDate, checkOutDate);
+
+    if (!isAvailable) {
+      console.error(`❌ Booking failed: Dates already booked for listing ${listingId}, user ${req.user._id}`);
+      return res.status(400).json({ success: false, message: "Selected dates are already booked" });
+    }
+
+    // Create booking
+    const booking = new Booking({
+      listing: listingId,
+      user: req.user._id,
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      totalPrice,
+      paymentStatus: 'success',
+    });
+
+    await booking.save();
+    console.log(`✅ Booking saved successfully: ${booking._id} for user ${req.user._id}, listing ${listingId}`);
+
+    // Send email notification
+    const listing = await Listing.findById(listingId).populate('owner');
+    const user = await User.findById(req.user._id);
+
+    await sendBookingNotification(booking, listing, user);
+    console.log(`📧 Email notification sent to owner ${listing.owner.email} for booking ${booking._id}`);
+
+    console.log(`🎉 Booking process completed successfully for booking ${booking._id}`);
+    res.status(201).json({ success: true, booking });
+  } catch (error) {
+    console.error(`💥 Error creating booking for user ${req.user._id}:`, error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+/**
+ * Get booked dates for a listing
+ * GET /bookings/listing/:id/booked-dates
+ */
+module.exports.getBookedDates = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const bookings = await Booking.find({ listing: id, paymentStatus: 'success' }, 'checkIn checkOut');
+    const bookedDates = bookings.map(b => ({ checkIn: b.checkIn, checkOut: b.checkOut }));
+    res.json({ success: true, bookedDates });
+  } catch (error) {
+    console.error("Error fetching booked dates:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Simulate payment success
+ * POST /bookings/payment/simulate
+ */
+module.exports.simulatePayment = (req, res) => {
+  // Simulate payment success
+  res.json({ success: true, message: "Payment simulated successfully" });
 };
