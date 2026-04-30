@@ -252,6 +252,8 @@ module.exports.paymentSuccess = async (req, res, next) => {
       });
     }
 
+    console.log("Payment successful");
+
     console.log("Checking availability...");
 
     const conflictingBooking = await Booking.findOne({
@@ -285,8 +287,6 @@ module.exports.paymentSuccess = async (req, res, next) => {
     } catch (emailError) {
       console.error("Error sending confirmation email:", emailError);
     }
-
-    console.log("Payment successful");
 
     res.json({
       success: true,
