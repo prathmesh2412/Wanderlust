@@ -299,22 +299,67 @@
     document.getElementById("totalPrice").innerText = "₹" + totalPrice.toLocaleString("en-IN");
   }
 
-  // Add event listeners for date inputs
-  document.getElementById("checkIn").addEventListener("change", calculateTotalPrice);
-  document.getElementById("checkOut").addEventListener("change", calculateTotalPrice);
+  const checkInInput = document.getElementById("checkIn");
+  const checkOutInput = document.getElementById("checkOut");
+  const subtotalEl = document.getElementById("subtotal");
+  const gstEl = document.getElementById("gstAmount");
+  const totalPriceEl = document.getElementById("totalPrice");
+  const bookingForm = document.getElementById("bookingForm");
+
+  function resetPriceDisplay() {
+    if (subtotalEl) subtotalEl.innerText = "₹0";
+    if (gstEl) gstEl.innerText = "₹0";
+    if (totalPriceEl) totalPriceEl.innerText = "₹0";
+  }
+
+  function updateCheckOutMin() {
+    if (!checkInInput || !checkOutInput) return;
+
+    const checkIn = checkInInput.value;
+    if (!checkIn) {
+      checkOutInput.min = new Date().toISOString().split("T")[0];
+      return;
+    }
+
+    const nextDay = new Date(checkIn);
+    nextDay.setDate(nextDay.getDate() + 1);
+    checkOutInput.min = nextDay.toISOString().split("T")[0];
+
+    if (checkOutInput.value) {
+      const checkOutDate = new Date(checkOutInput.value);
+      const checkInDate = new Date(checkIn);
+      if (checkOutDate <= checkInDate) {
+        checkOutInput.value = "";
+        resetPriceDisplay();
+      }
+    }
+  }
+
+  if (checkInInput && checkOutInput) {
+    checkInInput.addEventListener("change", () => {
+      updateCheckOutMin();
+      calculateTotalPrice();
+    });
+    checkOutInput.addEventListener("change", calculateTotalPrice);
+    updateCheckOutMin();
+  }
 
   // Validate form
   function validateBookingForm() {
-    const form = document.getElementById("bookingForm");
-    if (!form.checkValidity()) {
+    if (!bookingForm) {
+      alert("Booking form is not available.");
       return false;
     }
 
-    const checkIn = document.getElementById("checkIn").value;
-    const checkOut = document.getElementById("checkOut").value;
+    if (!bookingForm.checkValidity()) {
+      return false;
+    }
+
+    const checkIn = checkInInput?.value;
+    const checkOut = checkOutInput?.value;
 
     if (!checkIn || !checkOut) {
-      alert("Please provide both check-in and check-out dates");
+      alert("Please provide both check-in and check-out dates.");
       return false;
     }
 
@@ -322,7 +367,7 @@
     const checkOutDate = new Date(checkOut);
 
     if (checkOutDate <= checkInDate) {
-      alert("Check-out date must be after check-in date");
+      alert("Check-out date must be after check-in date.");
       return false;
     }
 
