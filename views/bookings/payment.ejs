@@ -1,0 +1,116 @@
+<%- include("../layouts/boilerplate") %>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Complete Your Booking</h2>
+                    
+                    <div class="booking-details mb-4">
+                        <p><strong>Listing:</strong> <%= listing.title %></p>
+                        <p><strong>Check-in:</strong> <%= checkInDate %></p>
+                        <p><strong>Check-out:</strong> <%= checkOutDate %></p>
+                        <p><strong>Total Amount:</strong> <span class="text-success">₹<%= totalAmount %></span></p>
+                        <p><strong>Nights:</strong> <%= nights %></p>
+                    </div>
+
+                    <button id="razorpayButton" class="btn btn-primary btn-lg w-100">
+                        Pay with Razorpay
+                    </button>
+
+                    <p class="text-muted text-center mt-3">
+                        <small>Your booking will be confirmed after payment</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    document.getElementById("razorpayButton").addEventListener("click", function() {
+        const options = {
+            key: "<%= razorpayKeyId %>",
+            amount: <%= totalAmount * 100 %>,
+            currency: "INR",
+            name: "Wanderlust",
+            description: "Booking Payment",
+            order_id: "<%= razorpayOrderId %>",
+            handler: function(response) {
+                console.log("Payment success");
+                console.log("Sending verification request");
+                
+                verifyPayment(response);
+            },
+            prefill: {
+                name: "<%= userDetails.name %>",
+                email: "<%= userDetails.email %>",
+                contact: "<%= userDetails.phone %>"
+            },
+            theme: {
+                color: "#0d6efd"
+            },
+            modal: {
+                ondismiss: function() {
+                    console.log("Payment modal closed");
+                }
+            }
+        };
+
+        const razorpay = new Razorpay(options);
+        razorpay.on('payment.failed', function(response) {
+            console.error("Payment failed:", response.error);
+            alert("Payment Failed: " + response.error.description);
+        });
+
+        razorpay.open();
+    });
+
+    function verifyPayment(response) {
+        const paymentData = {
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+            bookingId: "<%= bookingId %>"
+        };
+
+        fetch("/bookings/verify-payment", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(paymentData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Payment verified successfully");
+                alert("Payment Successful");
+                window.location.href = "/bookings";
+            } else {
+                alert("Payment Verification Failed: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error during verification:", error);
+            alert("Error processing payment verification");
+        });
+    }
+</script>
+
+<style>
+    .booking-details {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #0d6efd;
+    }
+    
+    .booking-details p {
+        margin-bottom: 10px;
+    }
+</style>
