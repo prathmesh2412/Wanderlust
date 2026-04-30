@@ -1,42 +1,32 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
-// Create transporter (configure with your email service)
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
-/**
- * Send booking notification email to listing owner
- * @param {Object} booking - Booking object
- * @param {Object} listing - Listing object
- * @param {Object} user - User object
- */
 const sendBookingNotification = async (booking, listing, user) => {
   try {
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: listing.owner.email, // Assuming listing has owner with email
+      to: listing.owner.email,
       subject: `New Booking for ${listing.title}`,
       html: `
-        <h2>New Booking Notification</h2>
-        <p><strong>Listing:</strong> ${listing.title}</p>
-        <p><strong>Booked by:</strong> ${user.username}</p>
-        <p><strong>Check-in:</strong> ${booking.checkIn.toDateString()}</p>
-        <p><strong>Check-out:</strong> ${booking.checkOut.toDateString()}</p>
-        <p><strong>Total Price:</strong> ₹${booking.totalPrice}</p>
-        <p>Please prepare for the guest's arrival.</p>
+        <h2>New Booking</h2>
+        <p><b>Listing:</b> ${listing.title}</p>
+        <p><b>User:</b> ${user.username}</p>
+        <p><b>Check-in:</b> ${booking.checkIn.toDateString()}</p>
+        <p><b>Check-out:</b> ${booking.checkOut.toDateString()}</p>
+        <p><b>Total:</b> ₹${booking.totalPrice}</p>
       `,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('Booking notification email sent successfully');
-  } catch (error) {
-    console.error('Error sending booking notification email:', error);
-    // Don't throw error to avoid breaking booking flow
+  } catch (err) {
+    console.error("Email error:", err.message);
   }
 };
 
