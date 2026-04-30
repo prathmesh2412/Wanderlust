@@ -86,6 +86,7 @@ module.exports.createBookingOrder = async (req, res) => {
       success: true,
       order,
       bookingId: booking._id,
+      listingId: listing._id,
       razorpayKeyId: process.env.RAZORPAY_KEY_ID,
       totalAmount: totalPrice,
       listing: {

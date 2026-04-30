@@ -369,14 +369,14 @@
   function openRazorpayCheckout(data) {
     // CRITICAL: Ensure amount matches backend exactly (in paise)
     // Backend sends totalPrice in rupees, Razorpay needs paise (amount * 100)
-    const amountInPaise = Math.round(data.totalPrice * 100);
+    const amountInPaise = Math.round(data.totalAmount * 100);
     
     console.log("Razorpay Options Debug:", {
-      key: data.keyId,
+      key: data.razorpayKeyId,
       amount: amountInPaise,
       currency: "INR",
-      order_id: data.orderId,
-      backendTotalPrice: data.totalPrice
+      order_id: data.order.id,
+      backendTotalAmount: data.totalAmount
     });
 
     /*
@@ -411,17 +411,17 @@
      */
 
     const options = {
-      key: data.keyId, // Your Razorpay Key ID
+      key: data.razorpayKeyId, // Your Razorpay Key ID
       amount: amountInPaise, // Amount in Paise (must match backend order amount)
       currency: "INR",
       name: "Wonderlust",
       description: "Booking for listing",
-      order_id: data.orderId, // Razorpay order ID - MUST match backend created order
+      order_id: data.order.id, // Razorpay order ID - MUST match backend created order
       // Prefill section - correctly populated from backend response
       prefill: {
-        name: data.userName || "Test User",      // From backend: data.userName
-        email: data.userEmail || "test@example.com", // From backend: data.userEmail
-        contact: '9999999999', // Domestic Indian contact to signal Indian transaction
+        name: data.userDetails?.name || "Test User",
+        email: data.userDetails?.email || "test@example.com",
+        contact: '9999999999',
       },
       theme: {
         color: "#3399cc",
@@ -514,8 +514,9 @@
 
     if (data.success) {
       alert("Payment successful! Your booking has been confirmed.");
-      // Ensure listingId is correctly passed to the redirect
-      window.location.href = `/listings/${pageData.listingId}`;
+      if (listingId) {
+        window.location.href = `/listings/${listingId}`;
+      }
     } else {
       // Log the specific error from the server to your browser console
       console.error("Verification failed:", data.message);
