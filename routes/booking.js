@@ -11,6 +11,13 @@ router.post(
   wrapAsync(bookingController.createBookingOrder)
 );
 
+// Show payment page
+router.get(
+  "/:id/payment",
+  isLoggedIn,
+  wrapAsync(bookingController.showPaymentPage)
+);
+
 // ✅ VERIFY PAYMENT (MAIN LOGIC HERE)
 router.post(
   "/verify-payment",

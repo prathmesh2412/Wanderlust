@@ -27,7 +27,7 @@ const sendBookingNotification = async (booking, listing, user) => {
         <p><strong>Booked by:</strong> ${user.username}</p>
         <p><strong>Check-in:</strong> ${booking.checkIn.toDateString()}</p>
         <p><strong>Check-out:</strong> ${booking.checkOut.toDateString()}</p>
-        <p><strong>Total Price:</strong> $${booking.totalPrice}</p>
+        <p><strong>Total Price:</strong> ₹${booking.totalPrice}</p>
         <p>Please prepare for the guest's arrival.</p>
       `,
     };
