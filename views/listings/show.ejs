@@ -498,10 +498,10 @@
       bookingId: bookingId,
     };
     
-    console.log("Sending to /bookings/verify/payment:", verificationData);
+    console.log("Sending to /bookings/verify-payment:", verificationData);
 
   try {
-    const verificationResponse = await fetch("/bookings/verify/payment", {
+    const verificationResponse = await fetch("/bookings/verify-payment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
