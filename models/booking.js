@@ -44,4 +44,26 @@ const bookingSchema = new Schema({
   },
 });
 
+// Static method to check availability for a listing
+bookingSchema.statics.checkAvailability = async function (listingId, checkIn, checkOut) {
+  const checkInDate = new Date(checkIn);
+  const checkOutDate = new Date(checkOut);
+
+  // Find overlapping bookings:
+  // - New checkIn is before existing checkOut AND
+  // - New checkOut is after existing checkIn
+  const overlappingBookings = await this.find({
+    listing: listingId,
+    paymentStatus: "success", // Only check confirmed bookings
+    $or: [
+      {
+        checkIn: { $lt: checkOutDate },
+        checkOut: { $gt: checkInDate },
+      },
+    ],
+  });
+
+  return overlappingBookings;
+};
+
 module.exports = mongoose.model("Booking", bookingSchema);
