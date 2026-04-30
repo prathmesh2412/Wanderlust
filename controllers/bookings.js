@@ -196,26 +196,28 @@ module.exports.verifyPayment = async (req, res) => {
       populate: { path: "owner" },
     });
 
-    const user = await User.findById(booking.user);
+   const user = await User.findById(booking.user);
 
    let emailStatus = "failed";
 
    try {
-       console.log("📧 Sending email...");
-       await sendBookingNotification(booking, booking.listing, user);
-       console.log("✅ Email sent");
-       emailStatus = "sent";
-      } catch (err) {
-       console.error("❌ Email failed FULL ERROR:");
-       console.error(err);
-    }
+     console.log("📧 Sending email...");
 
-    res.json({
-      success: true,
-      message: "Booking confirmed",
-      emailStatus,
-    });
-};
+     await sendBookingNotification(booking, booking.listing, user);
+
+     console.log("✅ Email sent successfully");
+
+      emailStatus = "sent"; // ⭐ FIX HERE
+    } catch (err) {
+        console.error("❌ Email failed FULL ERROR:");
+       console.error(err);
+}
+
+res.json({
+  success: true,
+  message: "Booking confirmed",
+  emailStatus,
+});
 
 
 // ============================================================
