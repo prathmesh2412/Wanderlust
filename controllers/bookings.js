@@ -145,23 +145,25 @@ module.exports.verifyPayment = async (req, res) => {
       bookingId,
     } = req.body;
 
-    // Validate required payment fields
+    // Validate required fields
     if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature || !bookingId) {
       return res.status(400).json({
         success: false,
-        message: "Missing required payment details"
+        message: "Missing required payment details",
       });
     }
 
-    console.log("🔐 Verifying Razorpay signature...");
-
     // Verify Razorpay signature
-    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+    console.log("🔐 Verifying Razorpay signature...");
+    const hmac = require("crypto").createHmac(
+      "sha256",
+      process.env.RAZORPAY_KEY_SECRET
+    );
     hmac.update(razorpayOrderId + "|" + razorpayPaymentId);
     const generatedSignature = hmac.digest("hex");
 
     if (generatedSignature !== razorpaySignature) {
-      console.log("❌ Payment signature verification failed");
+      console.log("❌ Invalid signature");
 
       await Booking.findByIdAndUpdate(bookingId, {
         paymentStatus: "failed",
@@ -173,41 +175,31 @@ module.exports.verifyPayment = async (req, res) => {
       });
     }
 
-    console.log("✅ Payment signature verified");
+    console.log("✅ Payment verified");
 
-    // Fetch booking using bookingId from database
-    console.log("📋 Fetching booking from database...");
+    // Fetch booking
     const booking = await Booking.findById(bookingId);
 
     if (!booking) {
-      console.log("❌ Booking not found:", bookingId);
       return res.status(404).json({
         success: false,
         message: "Booking not found",
       });
     }
 
-    console.log("✅ Booking fetched:", booking._id);
-    console.log("📅 Check-in:", booking.checkIn);
-    console.log("📅 Check-out:", booking.checkOut);
+    console.log("📅 Booking Dates:", booking.checkIn, booking.checkOut);
 
-    // Check availability using booking.checkIn and booking.checkOut from database
-    console.log("🔍 Checking availability using database dates...");
-
+    // ✅ Check for overlapping bookings (NO $or needed)
     const conflict = await Booking.findOne({
       listing: booking.listing,
       paymentStatus: "success",
       _id: { $ne: booking._id },
-      $or: [
-        {
-          checkIn: { $lt: booking.checkOut },
-          checkOut: { $gt: booking.checkIn },
-        },
-      ],
+      checkIn: { $lt: booking.checkOut },
+      checkOut: { $gt: booking.checkIn },
     });
 
     if (conflict) {
-      console.log("❌ Dates already booked by another booking");
+      console.log("❌ Conflict found");
 
       await Booking.findByIdAndUpdate(bookingId, {
         paymentStatus: "failed",
@@ -215,49 +207,43 @@ module.exports.verifyPayment = async (req, res) => {
 
       return res.status(400).json({
         success: false,
-        message: "Dates already booked",
+        message: "Selected dates are already booked",
       });
     }
 
-    console.log("✅ Availability check passed");
+    console.log("✅ No conflict, confirming booking");
 
-    // Update paymentStatus to "success"
-    console.log("💳 Updating payment status to 'success'...");
+    // Update booking
     booking.paymentStatus = "success";
     booking.razorpayPaymentId = razorpayPaymentId;
     booking.razorpaySignature = razorpaySignature;
-
     await booking.save();
-    console.log("✅ Payment status updated to 'success'");
 
-    // Populate listing.owner
-    console.log("👤 Populating listing owner...");
+    // Populate owner
     await booking.populate({
       path: "listing",
       populate: { path: "owner" },
     });
-    console.log("✅ Owner populated");
 
-    // Get user for email
     const user = await User.findById(booking.user);
 
-    // Send email to owner
+    // Send email
     try {
-      console.log("📧 Sending email to owner...");
+      console.log("📧 Sending email...");
       await sendBookingNotification(booking, booking.listing, user);
-      console.log("✅ Email sent successfully");
+      console.log("✅ Email sent");
     } catch (err) {
-      console.error("❌ Email error:", err.message);
+      console.error("❌ Email failed:", err.message);
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: "Payment successful & booking confirmed",
     });
 
   } catch (error) {
-    console.error("💥 Error in verifyPayment:", error);
-    res.status(500).json({
+    console.error("💥 verifyPayment error:", error);
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
