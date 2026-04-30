@@ -47,6 +47,31 @@ module.exports.createBookingOrder = async (req, res) => {
       });
     }
 
+    // ============================================================
+    // CHECK FOR DOUBLE BOOKING - Prevent overlapping bookings
+    // ============================================================
+    console.log("🔍 Checking booking availability...");
+    
+    const overlappingBookings = await Booking.checkAvailability(
+      id, 
+      checkIn, 
+      checkOut
+    );
+    
+    if (overlappingBookings.length > 0) {
+      console.log("❌ Dates already booked!");
+      return res.status(400).json({
+        success: false,
+        message: "Selected dates are already booked",
+        bookedDates: overlappingBookings.map(b => ({
+          checkIn: b.checkIn,
+          checkOut: b.checkOut
+        }))
+      });
+    }
+    
+    console.log("✅ Availability check passed - dates are available");
+
     console.log("✅ Validation passed");
 
     // Calculate total price
@@ -277,6 +302,95 @@ module.exports.handlePaymentFailure = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error handling payment failure"
+    });
+  }
+};
+
+// ============================================================
+// BONUS: Get booked dates for frontend date picker
+// GET /bookings/:id/booked-dates
+// Returns array of disabled dates for the listing
+// ============================================================
+module.exports.getBookedDates = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log("📅 Getting booked dates for listing:", id);
+    
+    // Get disabled dates using the model method
+    const disabledDates = await Booking.getDisabledDates(id);
+    
+    console.log("✅ Found disabled dates:", disabledDates.length);
+    
+    res.json({
+      success: true,
+      disabledDates: disabledDates,
+      count: disabledDates.length
+    });
+    
+  } catch (error) {
+    console.error("💥 Error getting booked dates:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching booked dates",
+      error: error.message
+    });
+  }
+};
+
+// ============================================================
+// BONUS: Check availability without creating booking
+// POST /bookings/check-availability
+// Used to validate dates before showing booking form
+// ============================================================
+module.exports.checkAvailability = async (req, res) => {
+  try {
+    const { listingId, checkIn, checkOut } = req.body;
+    
+    console.log("🔍 Checking availability for listing:", listingId);
+    console.log("📅 Dates:", checkIn, "to", checkOut);
+    
+    if (!listingId || !checkIn || !checkOut) {
+      return res.status(400).json({
+        success: false,
+        message: "listingId, checkIn, and checkOut are required"
+      });
+    }
+    
+    // Use the model method to check availability
+    const overlappingBookings = await Booking.checkAvailability(
+      listingId,
+      checkIn,
+      checkOut
+    );
+    
+    if (overlappingBookings.length > 0) {
+      console.log("❌ Dates already booked:", overlappingBookings.length);
+      return res.json({
+        success: false,
+        available: false,
+        message: "Selected dates are already booked",
+        bookedRanges: overlappingBookings.map(b => ({
+          checkIn: b.checkIn,
+          checkOut: b.checkOut
+        }))
+      });
+    }
+    
+    console.log("✅ Dates are available");
+    
+    res.json({
+      success: true,
+      available: true,
+      message: "Dates are available for booking"
+    });
+    
+  } catch (error) {
+    console.error("💥 Error checking availability:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error checking availability",
+      error: error.message
     });
   }
 };

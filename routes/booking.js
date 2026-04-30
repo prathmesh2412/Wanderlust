@@ -32,4 +32,26 @@ router.post(
   wrapAsync(bookingController.handlePaymentFailure)
 );
 
+// ============================================================
+// BONUS: Get booked dates for frontend date picker
+// GET /bookings/:id/booked-dates
+// Returns array of disabled dates for the listing
+// ============================================================
+router.get(
+  "/:id/booked-dates",
+  isLoggedIn,
+  wrapAsync(bookingController.getBookedDates)
+);
+
+// ============================================================
+// BONUS: Check availability without creating booking
+// POST /bookings/check-availability
+// Used to validate dates before showing booking form
+// ============================================================
+router.post(
+  "/check-availability",
+  isLoggedIn,
+  wrapAsync(bookingController.checkAvailability)
+);
+
 module.exports = router;
