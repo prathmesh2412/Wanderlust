@@ -37,6 +37,12 @@ router.post(
   wrapAsync(bookingController.handlePaymentFailure)
 );
 
+router.post(
+  "/payment-success/:id",
+  isLoggedIn,
+  wrapAsync(bookingController.paymentSuccess)
+);
+
 /**
  * Get all bookings for logged-in user
  * GET /bookings

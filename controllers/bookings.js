@@ -236,6 +236,48 @@ module.exports.handlePaymentFailure = async (req, res, next) => {
   }
 };
 
+module.exports.paymentSuccess = async (req, res, next) => {
+  try {
+    const { id: bookingId } = req.params;
+
+    const booking = await Booking.findByIdAndUpdate(
+      bookingId,
+      { paymentStatus: "success" },
+      { new: true }
+    ).populate({
+      path: "listing",
+      populate: { path: "owner" },
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    console.log("Booking updated");
+
+    const user = await User.findById(booking.user);
+
+    await sendBookingNotification(booking, booking.listing, user);
+
+    console.log("Email sent to owner");
+    console.log("Payment successful");
+
+    res.json({
+      success: true,
+      message: "Payment successful & booking confirmed",
+    });
+  } catch (error) {
+    console.error("Error processing payment success:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Payment success failed",
+    });
+  }
+};
+
 /**
  * Get user's bookings
  * GET /bookings
