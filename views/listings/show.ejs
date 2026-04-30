@@ -404,36 +404,36 @@
 
   // Verify Payment
   async function verifyPayment(response, bookingId) {
-    try {
-      const verificationResponse = await fetch("/bookings/verify/payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          razorpayOrderId: response.razorpay_order_id,
-          razorpayPaymentId: response.razorpay_payment_id,
-          razorpaySignature: response.razorpay_signature,
-          bookingId: bookingId,
-        }),
-      });
+  try {
+    const verificationResponse = await fetch("/bookings/verify/payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      // Use the camelCase keys that your controller expects
+      body: JSON.stringify({
+        razorpayOrderId: response.razorpay_order_id,
+        razorpayPaymentId: response.razorpay_payment_id,
+        razorpaySignature: response.razorpay_signature,
+        bookingId: bookingId,
+      }),
+    });
 
-      const data = await verificationResponse.json();
+    const data = await verificationResponse.json();
 
-      if (data.success) {
-        alert("Payment successful! Your booking has been confirmed.");
-        // Redirect to bookings page or listing page
-        window.location.href = `/listings/${listingId}`;
-      } else {
-        alert("Payment verification failed. Please contact support.");
-        handlePaymentFailure(null, bookingId);
-      }
-    } catch (error) {
-      console.error("Error verifying payment:", error);
-      alert("An error occurred while verifying payment. Please contact support.");
-      handlePaymentFailure(null, bookingId);
+    if (data.success) {
+      alert("Payment successful! Your booking has been confirmed.");
+      window.location.href = `/listings/${listingId}`;
+    } else {
+      // Log the specific error from the server to your browser console
+      console.error("Verification failed:", data.message);
+      alert("Payment verification failed: " + data.message);
     }
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    alert("An error occurred during verification. Please check your internet connection.");
   }
+}
 
   // Handle Payment Failure
   async function handlePaymentFailure(response, bookingId) {
