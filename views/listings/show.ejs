@@ -379,6 +379,37 @@
       backendTotalPrice: data.totalPrice
     });
 
+    /*
+     * ========================================================================
+     * RAZORPAY TEST CARD INSTRUCTIONS (For Domestic Indian Transactions)
+     * ========================================================================
+     * To avoid "International cards are not supported" error, use these test cards:
+     * 
+     * ✅ SUCCESSFUL DOMESTIC CARD (Visa):
+     *    Card Number: 4111 1111 1111 1111
+     *    Expiry: Any future date (e.g., 12/28)
+     *    CVV: Any 3 digits (e.g., 123)
+     *    OTP: 123456 (any 6 digits)
+     * 
+     * ✅ SUCCESSFUL DOMESTIC CARD (Mastercard):
+     *    Card Number: 5555 5555 5555 4444
+     *    Expiry: Any future date (e.g., 12/28)
+     *    CVV: Any 3 digits (e.g., 123)
+     *    OTP: 123456
+     * 
+     * ✅ SUCCESSFUL DOMESTIC CARD (RuPay):
+     *    Card Number: 6070 0000 0000 0001
+     *    Expiry: Any future date (e.g., 12/28)
+     *    CVV: Any 3 digits (e.g., 123)
+     *    OTP: 123456
+     * 
+     * ❌ FAILURE CARD (for testing failure handling):
+     *    Card Number: 4111 1111 1111 1125
+     * 
+     * NOTE: Make sure your Razorpay account is in "Test" mode, not "Live" mode.
+     * ========================================================================
+     */
+
     const options = {
       key: data.keyId, // Your Razorpay Key ID
       amount: amountInPaise, // Amount in Paise (must match backend order amount)
@@ -386,16 +417,32 @@
       name: "Wonderlust",
       description: "Booking for listing",
       order_id: data.orderId, // Razorpay order ID - MUST match backend created order
+      // Prefill section - correctly populated from backend response
       prefill: {
-        name: data.userName,
-        email: data.userEmail,
+        name: data.userName || "Test User",      // From backend: data.userName
+        email: data.userEmail || "test@example.com", // From backend: data.userEmail
+        contact: "", // Optional: Add if you collect phone numbers
       },
       theme: {
         color: "#3399cc",
       },
+      // Retry configuration - prevents modal from closing on first failure
+      retry: {
+        enabled: true,    // Allow retry on failure
+        max_count: 3      // Maximum 3 retry attempts
+      },
       handler: function (response) {
-        // Handle successful payment
-        verifyPayment(response, data.bookingId, data.listingId);
+        // Handle successful payment - pass exact keys to verifyPayment
+        // Razorpay returns: razorpay_order_id, razorpay_payment_id, razorpay_signature
+        verifyPayment(
+          {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          }, 
+          data.bookingId, 
+          data.listingId
+        );
       },
       modal: {
         ondismiss: function () {
