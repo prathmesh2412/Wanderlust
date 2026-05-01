@@ -31,7 +31,6 @@ const listingsRouter = require("./routes/listing");
 const reviewsRouter = require("./routes/review");
 const userRouter = require("./routes/user");
 const bookingRouter = require("./routes/booking");
-const ownerRouter = require("./routes/owner");
 
 
 
@@ -190,7 +189,6 @@ app.put("/profile/edit", isLoggedIn, upload.single("image"), async (req, res) =>
 app.use("/listings", listingsRouter);
 app.use("/listings/:id/reviews", reviewsRouter);
 app.use("/bookings", bookingRouter);
-app.use("/owner", ownerRouter);
 app.use("/", userRouter);
 
 
