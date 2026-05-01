@@ -1,35 +1,31 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  family: 4,
-  connectionTimeout: 10000, // ⭐ important
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendBookingNotification = async (booking, listing, user) => {
   try {
-    console.log("📨 Preparing email...");
+    console.log("📨 Sending email via Resend...");
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
+    const data = await resend.emails.send({
+      from: "Wanderlust <onboarding@resend.dev>",
       to: user.email,
-      subject: "Booking Confirmed",
-      text: `Your booking is confirmed for ${listing.title}`,
-    };
+      subject: "Booking Confirmed 🎉",
+      html: `
+        <h2>Booking Confirmed</h2>
+        <p>Hello ${user.username || "User"},</p>
+        <p>Your booking for <b>${listing.title}</b> is confirmed.</p>
+        <p><b>Check-in:</b> ${booking.checkIn}</p>
+        <p><b>Check-out:</b> ${booking.checkOut}</p>
+        <p><b>Total:</b> ₹${booking.totalPrice}</p>
+      `,
+    });
 
-    const result = await transporter.sendMail(mailOptions);
+    console.log("📩 Email sent:", data);
 
-    console.log("📩 Email sent result:", result.response);
+    return data;
 
-    return result;
   } catch (err) {
-    console.error("❌ EMAIL ERROR FULL:");
+    console.error("❌ Email error:");
     console.error(err);
     throw err;
   }
