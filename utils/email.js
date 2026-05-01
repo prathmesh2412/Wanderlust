@@ -8,7 +8,7 @@ const sendBookingNotification = async (booking, listing, user) => {
 
     const data = await resend.emails.send({
       from: "Wanderlust <onboarding@resend.dev>",
-      to: user.email || "prathm2112@gmail.com",
+      to: "prathm2112@gmail.com",
       subject: "Booking Confirmed 🎉",
       html: `
         <h2>Booking Confirmed</h2>
