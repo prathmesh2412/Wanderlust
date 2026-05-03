@@ -32,6 +32,13 @@ router.put(
   wrapAsync(bookingController.cancelBooking)
 );
 
+// Safety fallback if method-override fails and the browser submits a plain POST
+router.post(
+  "/:id/cancel",
+  isLoggedIn,
+  wrapAsync(bookingController.cancelBooking)
+);
+
 // Create Razorpay order + pending booking
 router.post(
   "/:id",
