@@ -18,11 +18,11 @@ router.post(
   wrapAsync(bookingController.handlePaymentFailure)
 );
 
-// Create Razorpay order + pending booking
-router.post(
-  "/:id",
+// Get user booking history (must come BEFORE /:id routes)
+router.get(
+  "/history",
   isLoggedIn,
-  wrapAsync(bookingController.createBookingOrder)
+  wrapAsync(bookingController.getUserBookings)
 );
 
 // Cancel booking
@@ -32,11 +32,11 @@ router.put(
   wrapAsync(bookingController.cancelBooking)
 );
 
-// Get user booking history
-router.get(
-  "/history",
+// Create Razorpay order + pending booking
+router.post(
+  "/:id",
   isLoggedIn,
-  wrapAsync(bookingController.getUserBookings)
+  wrapAsync(bookingController.createBookingOrder)
 );
 
 module.exports = router;
