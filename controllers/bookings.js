@@ -162,6 +162,7 @@ module.exports.verifyPayment = async (req, res) => {
     }
 
     booking.paymentStatus = "success";
+    booking.status = "Confirmed";
     booking.razorpayPaymentId = razorpayPaymentId;
     booking.razorpaySignature = razorpaySignature;
 
@@ -235,7 +236,48 @@ module.exports.handlePaymentFailure = async (req, res) => {
 
 
 // ============================================================
-// 📋 GET USER BOOKING HISTORY
+// � CANCEL BOOKING
+// ============================================================
+module.exports.cancelBooking = async (req, res) => {
+  const { id } = req.params;
+  const booking = await Booking.findById(id);
+
+  if (!booking) {
+    req.flash("error", "Booking not found.");
+    return res.redirect("/bookings/history");
+  }
+
+  if (!booking.user.equals(req.user._id)) {
+    req.flash("error", "You can only cancel your own bookings.");
+    return res.redirect("/bookings/history");
+  }
+
+  if (booking.status === "Cancelled") {
+    req.flash("error", "This booking is already cancelled.");
+    return res.redirect("/bookings/history");
+  }
+
+  const now = new Date();
+  const hoursToCheckIn = (booking.checkIn - now) / (1000 * 60 * 60);
+  if (hoursToCheckIn < 24) {
+    req.flash(
+      "error",
+      "Bookings can only be cancelled at least 24 hours before check-in."
+    );
+    return res.redirect("/bookings/history");
+  }
+
+  booking.status = "Cancelled";
+  booking.cancelledAt = new Date();
+  await booking.save();
+
+  req.flash("success", "Booking cancelled successfully.");
+  res.redirect("/bookings/history");
+};
+
+
+// ============================================================
+// �📋 GET USER BOOKING HISTORY
 // ============================================================
 module.exports.getUserBookings = async (req, res) => {
   try {

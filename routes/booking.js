@@ -25,6 +25,13 @@ router.post(
   wrapAsync(bookingController.createBookingOrder)
 );
 
+// Cancel booking
+router.put(
+  "/:id/cancel",
+  isLoggedIn,
+  wrapAsync(bookingController.cancelBooking)
+);
+
 // Get user booking history
 router.get(
   "/history",

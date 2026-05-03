@@ -30,8 +30,10 @@
             border-radius: 4px;
             font-size: 0.9rem;
             font-weight: bold;
+            margin-left: 8px;
         }
-        .status-success {
+        .status-success,
+        .status-confirmed {
             background-color: #d4edda;
             color: #155724;
         }
@@ -39,7 +41,8 @@
             background-color: #fff3cd;
             color: #856404;
         }
-        .status-failed {
+        .status-failed,
+        .status-cancelled {
             background-color: #f8d7da;
             color: #721c24;
         }
@@ -88,15 +91,14 @@
                             <% } %>
                             <%= booking.listing ? booking.listing.title : 'Listing not found' %>
                         </div>
-                        <span class="booking-status status-<%= booking.paymentStatus %>">
-                            <%= booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1) %>
-                        </span>
-                    </div>
-
-                    <div class="booking-details">
-                        <div class="detail-item">
-                            <div class="detail-label">Check-in:</div>
-                            <div class="detail-value"><%= new Date(booking.checkIn).toLocaleDateString() %></div>
+                <div>
+                    <span class="booking-status status-<%= booking.status.toLowerCase() %>">
+                        <%= booking.status %>
+                    </span>
+                    <span class="booking-status status-<%= booking.paymentStatus %>">
+                        <%= booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1) %>
+                    </span>
+                </div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Check-out:</div>
@@ -114,7 +116,18 @@
                             <div class="detail-label">Booked on:</div>
                             <div class="detail-value"><%= new Date(booking.createdAt).toLocaleDateString() %></div>
                         </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Cancelled at:</div>
+                            <div class="detail-value"><%= booking.cancelledAt ? new Date(booking.cancelledAt).toLocaleString() : '—' %></div>
+                        </div>
                     </div>
+
+                    <% if (booking.status !== 'Cancelled') { %>
+                        <form class="mt-3" action="/bookings/<%= booking._id %>/cancel" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                            <input type="hidden" name="_method" value="PUT">
+                            <button type="submit" class="btn btn-danger">Cancel Booking</button>
+                        </form>
+                    <% } %>
                 </div>
             <% }); %>
         <% } else { %>
