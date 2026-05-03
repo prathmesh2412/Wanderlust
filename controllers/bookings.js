@@ -232,3 +232,27 @@ module.exports.handlePaymentFailure = async (req, res) => {
     });
   }
 };
+
+
+// ============================================================
+// 📋 GET USER BOOKING HISTORY
+// ============================================================
+module.exports.getUserBookings = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Fetch bookings for the logged-in user, populate listing details, sort by latest first
+    const bookings = await Booking.find({ user: userId })
+      .populate({
+        path: 'listing',
+        select: 'title price location image' // Select only needed fields
+      })
+      .sort({ createdAt: -1 }); // Sort by latest first
+
+    res.render('bookings/history', { bookings });
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+    req.flash('error', 'Unable to load booking history');
+    res.redirect('/listings'); // Or some other page
+  }
+};

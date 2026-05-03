@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Booking History</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .booking-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .booking-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+        .booking-status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-failed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .booking-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #666;
+        }
+        .detail-value {
+            color: #333;
+        }
+        .no-bookings {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .listing-image {
+            width: 100px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../includes/navbar') %>
+
+    <div class="container mt-5">
+        <h1 class="mb-4">My Booking History</h1>
+
+        <% if (bookings && bookings.length > 0) { %>
+            <% bookings.forEach(booking => { %>
+                <div class="booking-card">
+                    <div class="booking-header">
+                        <div class="booking-title">
+                            <% if (booking.listing && booking.listing.image && booking.listing.image.url) { %>
+                                <img src="<%= booking.listing.image.url %>" alt="<%= booking.listing.title %>" class="listing-image me-3">
+                            <% } %>
+                            <%= booking.listing ? booking.listing.title : 'Listing not found' %>
+                        </div>
+                        <span class="booking-status status-<%= booking.paymentStatus %>">
+                            <%= booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1) %>
+                        </span>
+                    </div>
+
+                    <div class="booking-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Check-in:</div>
+                            <div class="detail-value"><%= new Date(booking.checkIn).toLocaleDateString() %></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Check-out:</div>
+                            <div class="detail-value"><%= new Date(booking.checkOut).toLocaleDateString() %></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Total Price:</div>
+                            <div class="detail-value">₹<%= booking.totalPrice %></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Location:</div>
+                            <div class="detail-value"><%= booking.listing ? booking.listing.location : 'N/A' %></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Booked on:</div>
+                            <div class="detail-value"><%= new Date(booking.createdAt).toLocaleDateString() %></div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="no-bookings">
+                <h3>No bookings found</h3>
+                <p>You haven't made any bookings yet. Start exploring listings to book your next stay!</p>
+                <a href="/listings" class="btn btn-primary">Browse Listings</a>
+            </div>
+        <% } %>
+    </div>
+
+    <%- include('../includes/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

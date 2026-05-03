@@ -25,4 +25,11 @@ router.post(
   wrapAsync(bookingController.createBookingOrder)
 );
 
+// Get user booking history
+router.get(
+  "/history",
+  isLoggedIn,
+  wrapAsync(bookingController.getUserBookings)
+);
+
 module.exports = router;
