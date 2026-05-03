@@ -101,8 +101,12 @@
                 </div>
                         </div>
                         <div class="detail-item">
+                            <div class="detail-label">Check-in:</div>
+                            <div class="detail-value"><%= booking.checkIn ? new Date(booking.checkIn).toDateString() : 'N/A' %></div>
+                        </div>
+                        <div class="detail-item">
                             <div class="detail-label">Check-out:</div>
-                            <div class="detail-value"><%= new Date(booking.checkOut).toLocaleDateString() %></div>
+                            <div class="detail-value"><%= booking.checkOut ? new Date(booking.checkOut).toDateString() : 'N/A' %></div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Total Price:</div>
@@ -114,11 +118,11 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Booked on:</div>
-                            <div class="detail-value"><%= new Date(booking.createdAt).toLocaleDateString() %></div>
+                            <div class="detail-value"><%= booking.createdAt ? new Date(booking.createdAt).toDateString() : 'N/A' %></div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Cancelled at:</div>
-                            <div class="detail-value"><%= booking.cancelledAt ? new Date(booking.cancelledAt).toLocaleString() : '—' %></div>
+                            <div class="detail-value"><%= booking.cancelledAt ? new Date(booking.cancelledAt).toDateString() : 'N/A' %></div>
                         </div>
                     </div>
 
