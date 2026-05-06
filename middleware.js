@@ -21,6 +21,14 @@ module.exports.saveRedirectUrl =(req, res, next ) => {
     next();
 };
 
+module.exports.isAdmin = (req, res, next) => {
+  if (!req.isAuthenticated() || req.user.role !== "admin") {
+    req.flash("error", "You must be an admin to access that page.");
+    return res.redirect("/listings");
+  }
+  next();
+};
+
 module.exports.isOwner = async (req , res , next) => {
   let { id }  = req.params;
   let listing = await Listing.findById(id);

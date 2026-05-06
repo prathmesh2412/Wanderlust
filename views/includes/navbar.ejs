@@ -122,6 +122,10 @@ body.dark-mode .dropdown-menu a:hover {
                <a href="/bookings/history">My Bookings</a>
                <a href="/profile/edit">Edit Profile</a>
                <a href="/listings/pending">Pending Blogs</a>
+               <% /* Show admin panel link only for admin users */ %>
+               <% if(currUser?.role === 'admin') { %>
+                 <a href="/admin/dashboard">Admin Panel</a>
+               <% } %>
                <a href="/logout">Logout</a>
              </div>
           </div>

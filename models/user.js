@@ -13,6 +13,13 @@ const userSchema = new Schema({
         required: true,
     },
 
+    role: {
+        type: String,
+        enum: ["user", "admin"],
+        default: "user",
+        // Role is assigned by backend logic only, never trusted from frontend input
+    },
+
     // ✅ Profile Image
     image: {
         url: {

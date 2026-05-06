@@ -7,20 +7,21 @@ module.exports.renderSignupForm =  (req , res) => {
 };
 
 
-module.exports.signup =async (req, res) => {
-   try{
-     let {username , email, password} = req.body;
-     const newUser = new User({email, username});
+module.exports.signup = async (req, res, next) => {
+   try {
+     const { username, email, password } = req.body;
+     // Assign role only on the backend using the trusted admin email from env
+     const role = email === process.env.ADMIN_EMAIL ? "admin" : "user";
+     const newUser = new User({ email, username, role });
      const registeredUser = await User.register(newUser, password);
-     console.log(registeredUser);
-     req.login( registeredUser , (err)=> {
-       if(err){
+     req.login(registeredUser, (err) => {
+       if (err) {
          return next(err);
        }
        req.flash("success", "Welcome to wanderlust");
        res.redirect("/listings");
      });
-   } catch(e){
+   } catch (e) {
       req.flash("error", e.message);
       res.redirect("/signup");
    }

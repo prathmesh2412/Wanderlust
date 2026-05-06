@@ -1,9 +1,6 @@
 if (process.env.NODE_ENV !== "production") {
-    require("dotenv").config();
+    require("dotenv").config(); // Load local environment vars from .env in development
 }
-console.log("Environment variable SECRET:", process.env.SECRET);
-
-
 
 const express = require("express");
 const app = express();
@@ -31,6 +28,7 @@ const listingsRouter = require("./routes/listing");
 const reviewsRouter = require("./routes/review");
 const userRouter = require("./routes/user");
 const bookingRouter = require("./routes/booking");
+const adminRouter = require("./routes/admin");
 
 
 
@@ -95,11 +93,6 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 
 passport.deserializeUser(User.deserializeUser());
-app.use((req, res, next) => {
-  res.locals.currUser = req.user;
-  next();
-});
-
 app.use((req, res, next) => {
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
@@ -190,6 +183,7 @@ app.put("/profile/edit", isLoggedIn, upload.single("image"), async (req, res) =>
 app.use("/listings", listingsRouter);
 app.use("/listings/:id/reviews", reviewsRouter);
 app.use("/bookings", bookingRouter);
+app.use("/admin", adminRouter);
 app.use("/", userRouter);
 
 
