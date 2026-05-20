@@ -16,44 +16,6 @@ const marker = new mapboxgl.Marker({ color: "red"})
   )
   .addTo(map);
 
-map.on('load', () => {
-    map.loadImage(
-        'https://cdn-icons-png.flaticon.com/512/25/25694.png', // home icon image
-        (error, image) => {
-            if (error) throw error;
 
-            // Add the image to the map style
-            map.addImage('home-icon', image);
-
-            // Add a data source containing one point feature
-            map.addSource('point', {
-                'type': 'geojson',
-                'data': {
-                    'type': 'FeatureCollection',
-                    'features': [
-                        {
-                            'type': 'Feature',
-                            'geometry': {
-                                'type': 'Point',
-                                'coordinates': listing.geometry.coordinates // your location
-                            }
-                        }
-                    ]
-                }
-            });
-
-            // Add a layer to use the home icon
-            map.addLayer({
-                'id': 'points',
-                'type': 'symbol',
-                'source': 'point',
-                'layout': {
-                    'icon-image': 'home-icon', // use the home icon
-                    'icon-size': 0.25
-                }
-            });
-        }
-    );
-});
 
 
