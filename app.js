@@ -180,6 +180,11 @@ app.put("/profile/edit", isLoggedIn, upload.single("image"), async (req, res) =>
 
 //Debug route to check listings data
 
+// Root route handler - redirects to listings
+app.get("/", (req, res) => {
+    res.redirect("/listings");
+});
+
 app.use("/listings", listingsRouter);
 app.use("/listings/:id/reviews", reviewsRouter);
 app.use("/bookings", bookingRouter);
