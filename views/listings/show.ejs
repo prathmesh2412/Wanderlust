@@ -87,6 +87,12 @@
           </div>
         </div>
 
+        <div class="row mt-2">
+          <div class="col-12">
+            <p id="availabilityStatus" class="text-muted mt-2"></p>
+          </div>
+        </div>
+
         <div class="row mt-2 p-3 bg-light rounded">
           <div class="col-md-6">
             <p class="mb-2">
@@ -335,12 +341,55 @@
     }
   }
 
+  // Fetch availability from server for selected date range
+  async function fetchAvailability(listingId) {
+    const availabilityEl = document.getElementById("availabilityStatus");
+    if (!checkInInput || !checkOutInput) return null;
+
+    const checkIn = checkInInput.value;
+    const checkOut = checkOutInput.value;
+
+    if (!checkIn || !checkOut) {
+      if (availabilityEl) availabilityEl.innerText = "";
+      return null;
+    }
+
+    try {
+      const url = `/bookings/${listingId}/availability?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (!data.success) {
+        if (availabilityEl) availabilityEl.innerText = "No Rooms Available";
+        return 0;
+      }
+
+      const avail = data.available ?? 0;
+      if (availabilityEl) {
+        availabilityEl.innerText = avail > 0 ? `Rooms Available: ${avail}` : "No Rooms Available";
+      }
+      return avail;
+    } catch (err) {
+      console.error("fetchAvailability error:", err);
+      if (availabilityEl) availabilityEl.innerText = "";
+      return null;
+    }
+  }
+
+  // Convenience wrapper to re-check when inputs change
+  async function checkAvailability() {
+    await fetchAvailability(listingId);
+  }
+
   if (checkInInput && checkOutInput) {
     checkInInput.addEventListener("change", () => {
       updateCheckOutMin();
       calculateTotalPrice();
+      checkAvailability();
     });
-    checkOutInput.addEventListener("change", calculateTotalPrice);
+    checkOutInput.addEventListener("change", () => {
+      calculateTotalPrice();
+      checkAvailability();
+    });
     updateCheckOutMin();
   }
 
@@ -382,8 +431,14 @@
 
     const checkIn = document.getElementById("checkIn").value;
     const checkOut = document.getElementById("checkOut").value;
-    
+    // Re-check availability just before creating order
     try {
+      const avail = await fetchAvailability(listingId);
+      if (avail === 0) {
+        alert("Selected dates are fully booked. Please choose another date range.");
+        return;
+      }
+
       const response = await fetch(`/bookings/${listingId}`, {
         method: "POST",
         headers: {

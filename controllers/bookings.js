@@ -11,6 +11,9 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// Default number of rooms per listing (can be overridden via env)
+const DEFAULT_ROOMS = parseInt(process.env.DEFAULT_ROOMS, 10) || 5;
+
 
 // ============================================================
 // ✅ CREATE BOOKING ORDER
@@ -48,17 +51,18 @@ module.exports.createBookingOrder = async (req, res) => {
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
 
-    const conflict = await Booking.findOne({
+    // Count overlapping confirmed bookings and compare with capacity
+    const overlappingConfirmed = await Booking.find({
       listing: id,
       paymentStatus: "success",
       checkIn: { $lt: checkOutDate },
       checkOut: { $gt: checkInDate },
     });
 
-    if (conflict) {
+    if (overlappingConfirmed.length >= DEFAULT_ROOMS) {
       return res.status(400).json({
         success: false,
-        message: "Selected dates are already booked",
+        message: "Selected dates are fully booked",
       });
     }
 
@@ -296,5 +300,38 @@ module.exports.getUserBookings = async (req, res) => {
     console.error('Error fetching user bookings:', error);
     req.flash('error', 'Unable to load booking history');
     res.redirect('/listings'); // Or some other page
+  }
+};
+
+// GET availability for a listing between two dates
+module.exports.getAvailability = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { checkIn, checkOut } = req.query;
+
+    if (!checkIn || !checkOut) {
+      return res.status(400).json({ success: false, message: "checkIn and checkOut are required" });
+    }
+
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+
+    if (isNaN(checkInDate) || isNaN(checkOutDate) || checkOutDate <= checkInDate) {
+      return res.status(400).json({ success: false, message: "Invalid date range" });
+    }
+
+    const overlappingConfirmed = await Booking.find({
+      listing: id,
+      paymentStatus: "success",
+      checkIn: { $lt: checkOutDate },
+      checkOut: { $gt: checkInDate },
+    });
+
+    const available = Math.max(0, DEFAULT_ROOMS - overlappingConfirmed.length);
+
+    return res.json({ success: true, available });
+  } catch (err) {
+    console.error("getAvailability error:", err);
+    return res.status(500).json({ success: false, message: "Error checking availability" });
   }
 };

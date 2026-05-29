@@ -46,4 +46,10 @@ router.post(
   wrapAsync(bookingController.createBookingOrder)
 );
 
+// Availability check for a listing (query: checkIn, checkOut)
+router.get(
+  "/:id/availability",
+  wrapAsync(bookingController.getAvailability)
+);
+
 module.exports = router;
