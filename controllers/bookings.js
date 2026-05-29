@@ -270,6 +270,12 @@ module.exports.cancelBooking = async (req, res) => {
     );
     return res.redirect("/bookings/history");
   }
+  // Also prevent cancelling if booking has already completed (checkout passed)
+  const completedAtMs = new Date(booking.checkOut).getTime() + 24 * 60 * 60 * 1000;
+  if (Date.now() >= completedAtMs || booking.status === "Completed") {
+    req.flash("error", "Cannot cancel a completed or expired booking.");
+    return res.redirect("/bookings/history");
+  }
 
   booking.status = "Cancelled";
   booking.cancelledAt = new Date();
@@ -294,6 +300,37 @@ module.exports.getUserBookings = async (req, res) => {
         select: 'title price location image' // Select only needed fields
       })
       .sort({ createdAt: -1 }); // Sort by latest first
+    // Update any bookings that have passed checkout to Completed (dynamic, timezone-aware)
+    const nowMs = Date.now();
+    const updates = [];
+    bookings.forEach((b) => {
+      try {
+        // compute midnight after checkout: checkout time + 24 hours
+        const checkoutMs = new Date(b.checkOut).getTime();
+        const completedAtMs = checkoutMs + 24 * 60 * 60 * 1000;
+
+        // If payment succeeded and checkout day has passed, mark Completed
+        if (
+          b.paymentStatus === 'success' &&
+          b.status !== 'Cancelled' &&
+          b.status !== 'Completed' &&
+          nowMs >= completedAtMs
+        ) {
+          b.status = 'Completed';
+          updates.push(b.save());
+        }
+
+        // Attach helper property for view to decide whether to show cancel button
+        b.isCompleted = (b.status === 'Completed') || (nowMs >= (new Date(b.checkOut).getTime() + 24 * 60 * 60 * 1000));
+        b.canCancel = !b.isCompleted && b.status !== 'Cancelled' && b.user.equals(userId);
+      } catch (e) {
+        console.error('Error computing booking dates for', b._id, e);
+      }
+    });
+
+    if (updates.length) {
+      await Promise.all(updates);
+    }
 
     res.render('bookings/history', { bookings });
   } catch (error) {

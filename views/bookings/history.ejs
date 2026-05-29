@@ -46,6 +46,10 @@
             background-color: #f8d7da;
             color: #721c24;
         }
+        .status-completed {
+            background-color: #e2e3f3;
+            color: #2a2a72;
+        }
         .booking-details {
             display: flex;
             flex-wrap: wrap;
@@ -126,7 +130,7 @@
                         </div>
                     </div>
 
-                    <% if (booking.status !== 'Cancelled') { %>
+                    <% if (booking.canCancel) { %>
                         <form class="mt-3" action="/bookings/<%= booking._id %>/cancel?_method=PUT" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
                             <input type="hidden" name="_method" value="PUT">
                             <button type="submit" class="btn btn-danger">Cancel Booking</button>
